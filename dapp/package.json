@@ -49,9 +49,13 @@
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
+    "bootstrap": "^3.3.7",
     "dotenv": "^2.0.0",
-    "react": "^15.4.2",
-    "react-dom": "^15.4.2"
+    "react": "^15.6.2",
+    "react-bootstrap": "^0.32.1",
+    "react-dom": "^15.6.2",
+    "react-s-alert": "^1.4.1",
+    "reactstrap": "^6.0.1"
   },
   "scripts": {
     "start": "node scripts/start.js",

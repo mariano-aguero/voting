@@ -1,41 +1,75 @@
-import React, { Component } from 'react'
-import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
-import getWeb3 from './utils/getWeb3'
+import React, {Component} from 'react';
+import {Container, Jumbotron, Button, Form, FormGroup, Label, Input, ListGroup, ListGroupItem} from 'reactstrap';
+import VoteContract from '../build/contracts/Vote.json';
+import getWeb3 from './utils/getWeb3';
+import Alert from 'react-s-alert';
 
-import './css/oswald.css'
-import './css/open-sans.css'
-import './css/pure-min.css'
-import './App.css'
+import './App.css';
+// Bootstrap
+import './../node_modules/bootstrap/dist/css/bootstrap.min.css';
+
+// Alert message
+import './../node_modules/react-s-alert/dist/s-alert-default.css';
+
+const voteYes = 'yes';
+const voteNo = 'no';
 
 class App extends Component {
+
   constructor(props) {
-    super(props)
+    super(props);
 
     this.state = {
-      storageValue: 0,
-      web3: null
+      hidden: "hidden",
+      web3: null,
+      contractInstance: null,
+      submitButtonEnabled: null,
+      alreadyVote: false,
+      myVoteOnTheInstance: null,
+      myVoteOnTheForm: null,
+      account: null,
+      quantityOfVoteForNo: 0,
+      quantityOfVoteForYes: 0
+    };
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  /**
+   * Will mount web3 and instantiate
+   * @returns {Promise.<void>}
+   */
+  async componentWillMount() {
+    // Get network provider and web3 instance.
+    // See utils/getWeb3 for more info.
+    try {
+      let results = await getWeb3;
+      if (!results || !results.web3) {
+        throw new Error('Error finding web3.');
+      }
+
+      this.setState({
+        web3: results.web3
+      });
+
+      // Instantiate contract once web3 provided.
+      this.instantiateContract();
+
+    } catch (err) {
+      let {message = 'Error finding web3.'} = err;
+
+      console.log(message);
+
+      Alert.error(message);
     }
   }
 
-  componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
-
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
-      })
-
-      // Instantiate contract once web3 provided.
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
-  }
-
-  instantiateContract() {
+  /**
+   * This function instantiate the smart contract used for voting
+   * @returns {Promise.<void>}
+   */
+  async instantiateContract() {
     /*
      * SMART CONTRACT EXAMPLE
      *
@@ -43,52 +77,178 @@ class App extends Component {
      * state management library, but for convenience I've placed them here.
      */
 
-    const contract = require('truffle-contract')
-    const simpleStorage = contract(SimpleStorageContract)
-    simpleStorage.setProvider(this.state.web3.currentProvider)
+    const contract = require('truffle-contract');
+    const voteContract = contract(VoteContract);
+    voteContract.setProvider(this.state.web3.currentProvider);
 
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var simpleStorageInstance
 
-    // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      simpleStorage.deployed().then((instance) => {
-        simpleStorageInstance = instance
+    this.state.web3.eth.getAccounts(async (error, accounts) => {
+      let instance = await voteContract.deployed();
+      let account = accounts[0];
 
-        // Stores a given value, 5 by default.
-        return simpleStorageInstance.set(5, {from: accounts[0]})
-      }).then((result) => {
-        // Get the value from the contract to prove it worked.
-        return simpleStorageInstance.get.call(accounts[0])
-      }).then((result) => {
-        // Update state with the result.
-        return this.setState({ storageValue: result.c[0] })
-      })
+      this.setState({
+        alreadyVote: await instance.alreadyVote({from: account})
+      });
+
+      this.setState({
+        myVoteOnTheInstance: await instance.myVote({from: account}) ? voteYes : voteNo
+      });
+
+      this.setState({
+        contractInstance: instance
+      });
+
+      this.setState({
+        account: account
+      });
+
+
+      let votesForNo = await instance.getVotedNo({from: account});
+      let votesForYes = await instance.getVotedYes({from: account});
+
+      this.setState({
+        quantityOfVoteForNo: votesForNo.toNumber(),
+        quantityOfVoteForYes: votesForYes.toNumber()
+      });
+
+      // In react when you hide or show a component we need to wait until state of variables are triggered
+      setTimeout(() => {
+        this.setState({
+          hidden: ""
+        }, 2000);
+      });
     })
+
   }
 
+  /**
+   * Handle radio button event change, to validate submit disable
+   * @param event
+   */
+  handleChange(event) {
+    if (event && event.currentTarget.value) {
+      this.setState({
+        submitButtonEnabled: true,
+        myVoteOnTheForm: event.currentTarget.value
+      });
+    }
+  }
+
+  /**
+   * Handle submit form and interact with smart contract
+   * @param event
+   */
+  async handleSubmit(event) {
+    event.preventDefault();
+    try {
+
+      if (this.state.myVoteOnTheForm !== voteYes && this.state.myVoteOnTheForm !== voteNo) {
+        throw new Error('The radio button value is invalid');
+      }
+
+      if (this.state.myVoteOnTheForm === voteYes) {
+        await this.state.contractInstance.voteYes({
+          from: this.state.account,
+          // value: this.state.web3.utils.toWei(0.01, "ether")
+        });
+      }
+
+      if (this.state.myVoteOnTheForm === voteNo) {
+        await this.state.contractInstance.voteNo({
+          from: this.state.account,
+          // value: this.state.web3.utils.toWei(0.01, "ether")
+        });
+      }
+
+      let myVote = await this.state.contractInstance.myVote({from: this.state.account}) ? voteYes : voteNo;
+      let votesForNo = await this.state.contractInstance.getVotedNo({from: this.state.account});
+      let votesForYes = await this.state.contractInstance.getVotedYes({from: this.state.account});
+
+      this.setState({
+        alreadyVote: true,
+        myVoteOnTheInstance: myVote,
+        quantityOfVoteForNo: votesForNo.toNumber(),
+        quantityOfVoteForYes: votesForYes.toNumber()
+      });
+
+      Alert.success('Vote succesfully submitted');
+
+    } catch (err) {
+      console.dir(err);
+      Alert.error(err.message);
+    }
+  }
+
+  /**
+   * Function to render the results
+   * @returns {boolean}
+   */
+  renderAlreadyVoteWhenTrue() {
+    return (
+      <div id="parent">
+        <legend>Voting results</legend>
+        <ListGroup>
+          <ListGroupItem>Number of voters per yes: <strong>{this.state.quantityOfVoteForYes}</strong></ListGroupItem>
+          <ListGroupItem>Number of voters per no: <strong>{this.state.quantityOfVoteForNo}</strong></ListGroupItem>
+        </ListGroup>
+
+        <legend>Your vote</legend>
+        <pre>You already vote! Your vote was for <strong>{this.state.myVoteOnTheInstance}</strong></pre>
+      </div>
+    )
+  }
+
+  /**
+   * Function to render the form to vote
+   * @returns {boolean}
+   */
+  renderAlreadyVoteWhenFalse() {
+    return (
+        <Form  onSubmit={this.handleSubmit}>
+            <FormGroup tag="fieldset">
+              <legend>Select an option</legend>
+              <FormGroup check>
+                <Label check>
+                  <Input type="radio" name="vote" value={voteYes} onChange={event => this.handleChange(event)} />{' '}
+                  Vote for 'Yes'
+                </Label>
+              </FormGroup>
+              <FormGroup check>
+                <Label check>
+                  <Input type="radio" name="vote" value={voteNo} onChange={event => this.handleChange(event)} />{' '}
+                  Vote for 'No'
+                </Label>
+              </FormGroup>
+           </FormGroup>
+           <FormGroup>
+             <Button disabled={!this.state.submitButtonEnabled} color="primary">Vote</Button>
+          </FormGroup>
+        </Form>
+
+    )
+  }
+
+  /**
+   * Render the template, if the user already vote render the results or the poll
+   * @returns {boolean}
+   */
   render() {
     return (
-      <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
-        </nav>
+            <Container>
+                <Jumbotron>
+                    <h2 className="display-3">Dap for voting</h2>
+                    <p className="lead">This is a simple decentralized application to be able to vote in a binary way.</p>
+                </Jumbotron>
 
-        <main className="container">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-              <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-              <p>The stored value is: {this.state.storageValue}</p>
-            </div>
-          </div>
-        </main>
-      </div>
+                <div className={this.state.hidden}>
+                { this.state.alreadyVote ? this.renderAlreadyVoteWhenTrue() : this.renderAlreadyVoteWhenFalse()}
+                </div>
+
+                <Alert stack={{limit: 1}} timeout={10000} />
+
+            </Container>
     );
   }
 }
 
-export default App
+export default App;

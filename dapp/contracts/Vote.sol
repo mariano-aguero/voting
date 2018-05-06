@@ -2,76 +2,98 @@ pragma solidity ^0.4.18;
 
 contract Vote {
 
-    /**
-     * Variables that accumulate quantities by categories 'yes' or 'no'
-     */
-    uint votedYes = 0;
-    uint votedNo = 0;
+  /**
+   * Variables that accumulate quantities by categories 'yes' or 'no'
+   */
+  uint votedYes = 0;
+  uint votedNo = 0;
 
-    /**
-     * Constant that keeps the cost of every voting
-     */
-    uint public constant COST_PER_VOTE = 0.01 ether;
+  struct Response {
+    bool vote;
+    bool doit;
+  }
 
-    /**
-     * Collection of votes
-     */
-    mapping(address => bool) votes;
+  /**
+   * Constant that keeps the cost of every voting
+   */
+  uint public constant COST_PER_VOTE = 0.01 ether;
 
-    /**
-     * Events
-     */
-    event VoteYes(address _voter);
-    event VoteNo(address _voter);
+  /**
+   * Collection of votes
+   */
+  mapping(address => Response) votes;
 
-    /**
-     * Function that allows to vote for 'yes'
-     */
-    function voteYes() checkValue payable public {
+  /**
+   * Events
+   */
+  event VoteYes(address _voter);
+  event VoteNo(address _voter);
 
-        if (votes[msg.sender]) revert();
+  /**
+   * Function that allows to vote for 'yes'
+   */
+  function voteYes()  public {
 
-        votes[msg.sender] = true;
-        ++votedYes;
-    }
+    require(votes[msg.sender].doit == false, 'Already vote');
 
-    /**
-     * Function that allows to vote for 'no'
-     */
-    function voteNo() checkValue payable public {
+    votes[msg.sender].vote = true;
+    votes[msg.sender].doit = true;
+    ++votedYes;
+  }
 
-        if (votes[msg.sender]) revert();
+  /**
+   * Function that allows to vote for 'no'
+   * checkValue payable
+   */
+  function voteNo()  public {
 
-        votes[msg.sender] = true;
-        ++votedNo;
-    }
+    require(votes[msg.sender].doit == false, 'Already vote');
 
-    /**
-     * Function that gets the number of positive votes
-     */
-    function getVotedYes() public constant returns (uint result){
-        result = votedYes;
-    }
+    votes[msg.sender].vote = false;
+    votes[msg.sender].doit = true;
+    ++votedNo;
+  }
 
-    /**
-     * Function that gets the number of negative votes
-     */
-    function getVotedNo() public constant returns (uint result){
-        result = votedNo;
-    }
+  /**
+   * Function that gets the number of positive votes
+   */
+  function getVotedYes() public constant returns (uint result){
+    result = votedYes;
+  }
 
-    /**
-     * Refund the excess value back to sender
-     */
-    modifier checkValue() {
-        require(msg.value == COST_PER_VOTE, 'Amount to pay must be 0.01 ether');
-        _;
-    }
+  /**
+   * Function that gets the number of negative votes
+   */
+  function getVotedNo() public constant returns (uint result){
+    result = votedNo;
+  }
 
-    /**
-     * Get Owner
-     */
-    function getOwner() public constant returns (address result){
-        result = msg.sender;
-    }
+  /**
+   * Refund the excess value back to sender
+   */
+  modifier checkValue() {
+    require(msg.value == COST_PER_VOTE, 'Amount to pay must be 0.01 ether');
+    _;
+  }
+
+  /**
+   * Get Owner
+   */
+  function getOwner() public constant returns (address result){
+    result = msg.sender;
+  }
+
+  /**
+   * Check if the user already vote
+   */
+  function alreadyVote() public constant returns (bool result){
+    result = votes[msg.sender].doit;
+  }
+
+  /**
+   * Check the user vote
+   */
+  function myVote() public constant returns (bool result){
+    result = votes[msg.sender].vote;
+  }
 }

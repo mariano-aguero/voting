@@ -244,7 +244,7 @@ class App extends Component {
                 { this.state.alreadyVote ? this.renderAlreadyVoteWhenTrue() : this.renderAlreadyVoteWhenFalse()}
                 </div>
 
-                <Alert stack={{limit: 1}} timeout={10000} />
+                <Alert stack={{limit: 1}} timeout={3000} />
 
             </Container>
     );

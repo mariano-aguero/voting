@@ -32,7 +32,7 @@ contract Vote {
   /**
    * Function that allows to vote for 'yes'
    */
-  function voteYes()  public {
+  function voteYes() checkValue payable public {
 
     require(votes[msg.sender].doit == false, 'Already vote');
 
@@ -43,9 +43,8 @@ contract Vote {
 
   /**
    * Function that allows to vote for 'no'
-   * checkValue payable
    */
-  function voteNo()  public {
+  function voteNo() checkValue payable public {
 
     require(votes[msg.sender].doit == false, 'Already vote');
 

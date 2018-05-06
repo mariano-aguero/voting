@@ -115,8 +115,8 @@ class App extends Component {
       setTimeout(() => {
         this.setState({
           hidden: ""
-        }, 2000);
-      });
+        });
+      }, 100);
     })
 
   }
@@ -149,14 +149,14 @@ class App extends Component {
       if (this.state.myVoteOnTheForm === voteYes) {
         await this.state.contractInstance.voteYes({
           from: this.state.account,
-          // value: this.state.web3.utils.toWei(0.01, "ether")
+          value: this.state.web3.toWei(0.01, "ether")
         });
       }
 
       if (this.state.myVoteOnTheForm === voteNo) {
         await this.state.contractInstance.voteNo({
           from: this.state.account,
-          // value: this.state.web3.utils.toWei(0.01, "ether")
+          value: this.state.web3.toWei(0.01, "ether")
         });
       }
 
@@ -247,6 +247,8 @@ class App extends Component {
                 <Alert stack={{limit: 1}} timeout={3000} />
 
             </Container>
+
+
     );
   }
 }

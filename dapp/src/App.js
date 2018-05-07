@@ -238,7 +238,7 @@ class App extends Component {
     return (
             <Container>
                 <Jumbotron>
-                    <h2 className="display-3">Dap for voting</h2>
+                    <h2 className="display-3">Dapp for voting</h2>
                     <p className="lead">This is a simple decentralized application to be able to vote in a binary way.</p>
                 </Jumbotron>
 

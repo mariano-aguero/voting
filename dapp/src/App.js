@@ -102,7 +102,6 @@ class App extends Component {
         account: account
       });
 
-
       let votesForNo = await instance.getVotedNo({from: account});
       let votesForYes = await instance.getVotedYes({from: account});
 
@@ -142,6 +141,10 @@ class App extends Component {
     event.preventDefault();
     try {
 
+      this.setState({
+        submitButtonEnabled: false
+      });
+
       if (this.state.myVoteOnTheForm !== voteYes && this.state.myVoteOnTheForm !== voteNo) {
         throw new Error('The radio button value is invalid');
       }
@@ -164,8 +167,13 @@ class App extends Component {
       let votesForNo = await this.state.contractInstance.getVotedNo({from: this.state.account});
       let votesForYes = await this.state.contractInstance.getVotedYes({from: this.state.account});
 
+      console.log(`My vote ${myVote}`);
+      console.log(`Votes for no ${votesForNo.toNumber()}`);
+      console.log(`Votes for yes ${votesForYes.toNumber()}`);
+
       this.setState({
         alreadyVote: true,
+        submitButtonEnabled: true,
         myVoteOnTheInstance: myVote,
         quantityOfVoteForNo: votesForNo.toNumber(),
         quantityOfVoteForYes: votesForYes.toNumber()
@@ -175,6 +183,9 @@ class App extends Component {
 
     } catch (err) {
       console.dir(err);
+      this.setState({
+        submitButtonEnabled: true
+      });
       Alert.error(err.message);
     }
   }
@@ -186,12 +197,6 @@ class App extends Component {
   renderAlreadyVoteWhenTrue() {
     return (
       <div id="parent">
-        <legend>Voting results</legend>
-        <ListGroup>
-          <ListGroupItem>Number of voters per yes: <strong>{this.state.quantityOfVoteForYes}</strong></ListGroupItem>
-          <ListGroupItem>Number of voters per no: <strong>{this.state.quantityOfVoteForNo}</strong></ListGroupItem>
-        </ListGroup>
-
         <legend>Your vote</legend>
         <pre>You already vote! Your vote was for <strong>{this.state.myVoteOnTheInstance}</strong></pre>
       </div>
@@ -204,6 +209,7 @@ class App extends Component {
    */
   renderAlreadyVoteWhenFalse() {
     return (
+      <div id="parent">
         <Form  onSubmit={this.handleSubmit}>
             <FormGroup tag="fieldset">
               <legend>Select an option</legend>
@@ -224,7 +230,7 @@ class App extends Component {
              <Button disabled={!this.state.submitButtonEnabled} color="primary">Vote</Button>
           </FormGroup>
         </Form>
-
+      </div>
     )
   }
 
@@ -240,12 +246,17 @@ class App extends Component {
                     <p className="lead">This is a simple decentralized application to be able to vote in a binary way.</p>
                 </Jumbotron>
 
+                <legend>Voting results</legend>
+                  <ListGroup>
+                  <ListGroupItem>Number of voters per yes: <strong>{this.state.quantityOfVoteForYes}</strong></ListGroupItem>
+                  <ListGroupItem>Number of voters per no: <strong>{this.state.quantityOfVoteForNo}</strong></ListGroupItem>
+                </ListGroup>
+
                 <div className={this.state.hidden}>
                 { this.state.alreadyVote ? this.renderAlreadyVoteWhenTrue() : this.renderAlreadyVoteWhenFalse()}
                 </div>
 
-                <Alert stack={{limit: 1}} timeout={3000} />
-
+                <Alert stack={{limit: 1}} timeout={10000} />
             </Container>
 
 

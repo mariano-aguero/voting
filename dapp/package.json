@@ -55,6 +55,7 @@
     "react-bootstrap": "^0.32.1",
     "react-dom": "^15.6.2",
     "react-s-alert": "^1.4.1",
+    "react-spinners": "^0.3.2",
     "reactstrap": "^6.0.1"
   },
   "scripts": {

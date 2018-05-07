@@ -95,4 +95,12 @@ contract Vote {
   function myVote() public constant returns (bool result){
     result = votes[msg.sender].vote;
   }
+
+  /**
+   * Function that gets the cost
+   */
+  function getCostPerVote() public pure returns (uint result){
+    result = COST_PER_VOTE;
+  }
+
 }

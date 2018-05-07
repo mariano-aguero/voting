@@ -167,10 +167,6 @@ class App extends Component {
       let votesForNo = await this.state.contractInstance.getVotedNo({from: this.state.account});
       let votesForYes = await this.state.contractInstance.getVotedYes({from: this.state.account});
 
-      console.log(`My vote ${myVote}`);
-      console.log(`Votes for no ${votesForNo.toNumber()}`);
-      console.log(`Votes for yes ${votesForYes.toNumber()}`);
-
       this.setState({
         alreadyVote: true,
         submitButtonEnabled: true,

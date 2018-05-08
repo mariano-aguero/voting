@@ -29,7 +29,9 @@ class App extends Component {
       myVote: null,           // my vote on the contract
       account: null,          // actual account
       quantityOfVoteForNo: 0, // results for 'no'
-      quantityOfVoteForYes: 0 // results fot 'yes'
+      quantityOfVoteForYes: 0,// results fot 'yes'
+      latestFilter: null,     // filter to latest block
+      txHash: null            // transaction hash related to the user vote
     };
 
   }
@@ -47,8 +49,12 @@ class App extends Component {
         throw new Error('Error finding web3.');
       }
 
+      // Setup a filter for the latest block
+      const latestFilter = results.web3.eth.filter('latest');
+
       this.setState({
-        web3: results.web3
+        web3: results.web3,
+        latestFilter: latestFilter
       });
 
       // Instantiate contract once web3 provided.
@@ -78,7 +84,6 @@ class App extends Component {
     const contract = require('truffle-contract');
     const voteContract = contract(VoteContract);
     voteContract.setProvider(this.state.web3.currentProvider);
-
 
     this.state.web3.eth.getAccounts(async (error, accounts) => {
       let instance = await voteContract.deployed();
@@ -131,8 +136,9 @@ class App extends Component {
       });
 
       // Handle yes
+      let result;
       if (vote === voteYes) {
-        await this.state.contractInstance.voteYes({
+        result = await this.state.contractInstance.voteYes({
           from: this.state.account,
           value: this.state.web3.toWei(0.01, "ether")
         });
@@ -140,28 +146,63 @@ class App extends Component {
 
       // Handle no
       if (vote === voteNo) {
-        await this.state.contractInstance.voteNo({
+        result = await this.state.contractInstance.voteNo({
           from: this.state.account,
           value: this.state.web3.toWei(0.01, "ether")
         });
       }
 
-      let myVote = await this.state.contractInstance.myVote({from: this.state.account}) ? voteYes : voteNo;
-      let votesForNo = await this.state.contractInstance.getVotedNo({from: this.state.account});
-      let votesForYes = await this.state.contractInstance.getVotedYes({from: this.state.account});
+      // Set hash transaction
+      if(result && result.tx) {
+        this.setState({
+          txHash: result.tx
+        });
+      }
 
-      this.setState({
-        alreadyVote: true,
-        buttonSubmitted: false,
-        myVote: myVote,
-        quantityOfVoteForNo: votesForNo.toNumber(),
-        quantityOfVoteForYes: votesForYes.toNumber()
-      });
+      const {latestFilter, web3} = this.state;
 
-      Alert.success('Vote succesfully submitted');
+      latestFilter.watch((error, result) => {
+        if (error) {
+          console.error(error);
+        } else {
+          let thisTx = this.state.txHash;
+          console.log(`State transaction for vote ${thisTx}`);
+
+          web3.eth.getBlock('latest', async (e, res) => {
+            let {transactions} = res;
+
+            transactions.map(async (transaction) => {
+              if (thisTx !== transaction) {
+                return transaction;
+              }
+
+              console.log("Got match!");
+
+              let myVote = await this.state.contractInstance.myVote({from: this.state.account}) ? voteYes : voteNo;
+              let votesForNo = await this.state.contractInstance.getVotedNo({from: this.state.account});
+              let votesForYes = await this.state.contractInstance.getVotedYes({from: this.state.account});
+
+              this.setState({
+                myVote: myVote,
+                quantityOfVoteForNo: votesForNo.toNumber(),
+                quantityOfVoteForYes: votesForYes.toNumber()
+              });
+
+              return transaction;
+            })
+          });
+        }
+
+        this.setState({
+          alreadyVote: true,
+          buttonSubmitted: false
+        });
+
+        Alert.success('Vote succesfully submitted');
+      })
 
     } catch (err) {
-      console.dir(err);
+      console.error(err);
       this.setState({
         buttonSubmitted: false
       });

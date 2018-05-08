@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
-import {Container, Jumbotron, Button, Form, FormGroup, Label, Input, ListGroup, ListGroupItem} from 'reactstrap';
+import {Container, Jumbotron, Button, ListGroup, ListGroupItem, ButtonToolbar} from 'reactstrap';
 import VoteContract from '../build/contracts/Vote.json';
 import getWeb3 from './utils/getWeb3';
 import Alert from 'react-s-alert';
 
 import './App.css';
+
 // Bootstrap
 import './../node_modules/bootstrap/dist/css/bootstrap.min.css';
 
@@ -21,19 +22,16 @@ class App extends Component {
 
     this.state = {
       hidden: "hidden",
-      web3: null,
-      contractInstance: null,
-      submitButtonEnabled: null,
-      alreadyVote: false,
-      myVoteOnTheInstance: null,
-      myVoteOnTheForm: null,
-      account: null,
-      quantityOfVoteForNo: 0,
-      quantityOfVoteForYes: 0
+      web3: null,             // variable that manage web3 instance
+      contractInstance: null, // variable that manage the vote contract instance
+      buttonSubmitted: null,  // disable button on submit
+      alreadyVote: false,     // variable that know if an account already vote
+      myVote: null,           // my vote on the contract
+      account: null,          // actual account
+      quantityOfVoteForNo: 0, // results for 'no'
+      quantityOfVoteForYes: 0 // results fot 'yes'
     };
 
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleChange = this.handleChange.bind(this);
   }
 
   /**
@@ -91,7 +89,7 @@ class App extends Component {
       });
 
       this.setState({
-        myVoteOnTheInstance: await instance.myVote({from: account}) ? voteYes : voteNo
+        myVote: await instance.myVote({from: account}) ? voteYes : voteNo
       });
 
       this.setState({
@@ -121,42 +119,27 @@ class App extends Component {
   }
 
   /**
-   * Handle radio button event change, to validate submit disable
-   * @param event
-   */
-  handleChange(event) {
-    if (event && event.currentTarget.value) {
-      this.setState({
-        submitButtonEnabled: true,
-        myVoteOnTheForm: event.currentTarget.value
-      });
-    }
-  }
-
-  /**
    * Handle submit form and interact with smart contract
    * @param event
    */
-  async handleSubmit(event) {
+  async handleClick(vote) {
     event.preventDefault();
     try {
 
       this.setState({
-        submitButtonEnabled: false
+        buttonSubmitted: true
       });
 
-      if (this.state.myVoteOnTheForm !== voteYes && this.state.myVoteOnTheForm !== voteNo) {
-        throw new Error('The radio button value is invalid');
-      }
-
-      if (this.state.myVoteOnTheForm === voteYes) {
+      // Handle yes
+      if (vote === voteYes) {
         await this.state.contractInstance.voteYes({
           from: this.state.account,
           value: this.state.web3.toWei(0.01, "ether")
         });
       }
 
-      if (this.state.myVoteOnTheForm === voteNo) {
+      // Handle no
+      if (vote === voteNo) {
         await this.state.contractInstance.voteNo({
           from: this.state.account,
           value: this.state.web3.toWei(0.01, "ether")
@@ -169,8 +152,8 @@ class App extends Component {
 
       this.setState({
         alreadyVote: true,
-        submitButtonEnabled: true,
-        myVoteOnTheInstance: myVote,
+        buttonSubmitted: false,
+        myVote: myVote,
         quantityOfVoteForNo: votesForNo.toNumber(),
         quantityOfVoteForYes: votesForYes.toNumber()
       });
@@ -180,7 +163,7 @@ class App extends Component {
     } catch (err) {
       console.dir(err);
       this.setState({
-        submitButtonEnabled: true
+        buttonSubmitted: false
       });
       Alert.error(err.message);
     }
@@ -194,7 +177,7 @@ class App extends Component {
     return (
       <div id="parent">
         <legend>Your vote</legend>
-        <pre>You already vote! Your vote was for <strong>{this.state.myVoteOnTheInstance}</strong></pre>
+        <pre>You already vote! Your vote was for <strong>{this.state.myVote}</strong></pre>
       </div>
     )
   }
@@ -206,26 +189,10 @@ class App extends Component {
   renderAlreadyVoteWhenFalse() {
     return (
       <div id="parent">
-        <Form  onSubmit={this.handleSubmit}>
-            <FormGroup tag="fieldset">
-              <legend>Select an option</legend>
-              <FormGroup check>
-                <Label check>
-                  <Input type="radio" name="vote" value={voteYes} onChange={event => this.handleChange(event)} />{' '}
-                  Vote for 'Yes'
-                </Label>
-              </FormGroup>
-              <FormGroup check>
-                <Label check>
-                  <Input type="radio" name="vote" value={voteNo} onChange={event => this.handleChange(event)} />{' '}
-                  Vote for 'No'
-                </Label>
-              </FormGroup>
-           </FormGroup>
-           <FormGroup>
-             <Button disabled={!this.state.submitButtonEnabled} color="primary">Vote</Button>
-          </FormGroup>
-        </Form>
+        <ButtonToolbar>
+          <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteYes)} color="primary">Vote for yes</Button>
+          <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteNo)} color="primary">Vote for no</Button>
+        </ButtonToolbar>
       </div>
     )
   }

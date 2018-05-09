@@ -55,6 +55,11 @@ This box comes with everything you need to start using smart contracts from a re
     npm run build
     ```
 
+9. Problem with "error watching file for changes: EMFILE", please install watchman
+    ```javascript
+    brew install watchman
+    ```
+
 ## FAQ
 
 * __How do I use this with the EthereumJS TestRPC?__

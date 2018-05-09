@@ -1,5 +1,5 @@
-var SimpleStorage = artifacts.require("./SimpleStorage.sol");
-var Vote = artifacts.require("./Vote.sol");
+const SimpleStorage = artifacts.require("./SimpleStorage.sol");
+const Vote = artifacts.require("./Vote.sol");
 
 module.exports = function(deployer) {
   deployer.deploy(SimpleStorage);

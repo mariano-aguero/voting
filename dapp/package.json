@@ -49,6 +49,7 @@
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
+    "bignumber.js": "^7.0.1",
     "bootstrap": "^3.3.7",
     "dotenv": "^2.0.0",
     "react": "^15.6.2",

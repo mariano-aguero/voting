@@ -34,7 +34,7 @@ contract Vote {
     */
     function voteYes() checkValue payable public {
         // Check with require if address already vote
-        require(votes[msg.sender].doit == false, "Already vote");
+        require(alreadyVote() == false, "Already vote");
 
         votes[msg.sender].vote = true;
         votes[msg.sender].doit = true;
@@ -46,7 +46,7 @@ contract Vote {
     */
     function voteNo() checkValue payable public {
         // Check with require if address already vote
-        require(votes[msg.sender].doit == false, "Already vote");
+        require(alreadyVote() == false, "Already vote");
 
         votes[msg.sender].vote = false;
         votes[msg.sender].doit = true;
@@ -93,6 +93,8 @@ contract Vote {
     * Check the user vote
     */
     function myVote() public view returns (bool result){
+        require(alreadyVote() == true, "Vote doesnt exist");
+
         result = votes[msg.sender].vote;
     }
 

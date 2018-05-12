@@ -80,6 +80,7 @@ This box comes with everything you need to start using smart contracts from a re
 3. Move to the dapp directory on a terminal
     ```bash
     $ cd dapp
+    $ npm install
     ```
     
 4. Install ganache and execute it

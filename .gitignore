@@ -1,1 +1,3 @@
 .idea
+dapp/node_modules
+dapp/build_webpack

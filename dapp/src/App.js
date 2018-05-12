@@ -3,6 +3,7 @@ import {Button, ButtonToolbar, Container, Jumbotron, ListGroup, ListGroupItem} f
 import VoteContract from '../build/contracts/Vote.json';
 import getWeb3 from './utils/getWeb3';
 import Alert from 'react-s-alert';
+import {translate} from 'react-i18next';
 
 import './App.css';
 // Bootstrap
@@ -19,6 +20,8 @@ class App extends Component {
         super(props);
 
         this.state = {
+            i18n: this.props.i18n,  // declare translations variables
+            t: this.props.t,        // declare translations variables
             hidden: "hidden",
             web3: null,             // variable that manage web3 instance
             contractInstance: null, // variable that manage the vote contract instance
@@ -31,6 +34,11 @@ class App extends Component {
             latestFilter: null,     // filter to latest block
             txHash: null            // transaction hash related to the user vote
         };
+
+        // Change language to navigator language preference
+        if(navigator && navigator.language) {
+            this.state.i18n.changeLanguage(navigator.language);
+        }
 
     }
 
@@ -200,7 +208,7 @@ class App extends Component {
                     buttonSubmitted: false
                 });
 
-                Alert.success('Vote succesfully submitted');
+                Alert.success(this.state.i18n.t('Vote succesfully submitted'));
             })
 
         } catch (err) {
@@ -212,50 +220,50 @@ class App extends Component {
         }
     }
 
-  /**
-   * Function to render the results
-   * @returns {boolean}
-   */
-  renderAlreadyVoteWhenTrue() {
-    return (
-      <div id="parent">
-        <legend>Your vote</legend>
-        <pre>You already vote! Your vote was for <strong>{this.state.myVote}</strong></pre>
-      </div>
-    )
-  }
+    /**
+    * Function to render the results
+    * @returns {boolean}
+    */
+    renderAlreadyVoteWhenTrue() {
+        return (
+          <div id="parent">
+            <legend>{this.state.t('Your vote')}</legend>
+            <pre>{this.state.t('You already vote! Your vote was for')} <strong>{this.state.t(this.state.myVote)}</strong></pre>
+          </div>
+        )
+    }
 
-  /**
-   * Function to render the form to vote
-   * @returns {boolean}
-   */
-  renderAlreadyVoteWhenFalse() {
-    return (
-      <div id="parent">
-        <ButtonToolbar>
-          <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteYes)} color="primary">Vote for yes</Button>
-          <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteNo)} color="primary">Vote for no</Button>
-        </ButtonToolbar>
-      </div>
-    )
-  }
+    /**
+    * Function to render the form to vote
+    * @returns {boolean}
+    */
+    renderAlreadyVoteWhenFalse() {
+        return (
+          <div id="parent">
+            <ButtonToolbar>
+              <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteYes)} color="primary">{this.state.t('Vote for yes')}</Button>
+              <Button disabled={this.state.buttonSubmitted} onClick={(e) => this.handleClick(voteNo)} color="primary">{this.state.t('Vote for no')}</Button>
+            </ButtonToolbar>
+          </div>
+        )
+    }
 
-  /**
-   * Render the template, if the user already vote render the results or the poll
-   * @returns {boolean}
-   */
-  render() {
-    return (
+    /**
+    * Render the template, if the user already vote render the results or the poll
+    * @returns {boolean}
+    */
+    render() {
+        return (
             <Container>
                 <Jumbotron>
-                    <h2 className="display-3">Dapp for voting</h2>
-                    <p className="lead">This is a simple decentralized application to be able to vote in a binary way.</p>
+                    <h2 className="display-3">{this.state.t('Dapp for voting')}</h2>
+                    <p className="lead">{this.state.t('This is a simple decentralized application to be able to vote in a binary way.')}</p>
                 </Jumbotron>
 
-                <legend>Voting results</legend>
+                <legend>{this.state.t('Voting results')}</legend>
                   <ListGroup>
-                  <ListGroupItem>Number of voters per yes: <strong>{this.state.quantityOfVoteForYes}</strong></ListGroupItem>
-                  <ListGroupItem>Number of voters per no: <strong>{this.state.quantityOfVoteForNo}</strong></ListGroupItem>
+                  <ListGroupItem>{this.state.t('Number of voters per yes')}: <strong>{this.state.quantityOfVoteForYes}</strong></ListGroupItem>
+                  <ListGroupItem>{this.state.t('Number of voters per no')}: <strong>{this.state.quantityOfVoteForNo}</strong></ListGroupItem>
                 </ListGroup>
 
                 <div className={this.state.hidden}>
@@ -267,7 +275,7 @@ class App extends Component {
 
 
     );
-  }
+    }
 }
 
-export default App;
+export default  translate('translations')(App);
